@@ -1,6 +1,6 @@
 {
-  "name": "@brinkninja/univ3-adapter",
-  "version": "1.2.0",
+  "name": "@brinkninja/univ3-adapter-v2",
+  "version": "1.0.0",
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
