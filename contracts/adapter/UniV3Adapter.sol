@@ -74,6 +74,35 @@ contract UniV3Adapter {
       tokenIn.transfer(ADAPTER_OWNER, tokenInBalRemaining);
     }
   }
+  
+  /// @dev Makes a call to the Uniswap V3SwapRouter with swap byte data
+  /// @dev returns the requested tokenOutAmount to Account and keeps the rest
+  /// @dev use of this function assumes shitcoin in and shitcoin out. 
+  /// @dev if whitelisted coin in a swap, use uniV3Swap instead
+  function uniV3ShitcoinSwap(bytes memory initialSwapData, bytes memory finalSwapData, IERC20 tokenIn, IERC20 tokenOut, uint tokenOutAmount, address account) external {
+    _routerApproveMax(tokenIn);
+    _routerApproveMax(tokenOut);
+
+    assembly {
+      let result := call(gas(), V3_SWAP_ROUTER_ADDRESS, 0, add(initialSwapData, 0x20), mload(initialSwapData), 0, 0)
+      if eq(result, 0) {
+        returndatacopy(0, 0, returndatasize())
+        revert(0, returndatasize())
+      }
+    }
+
+    tokenOut.transfer(account, tokenOutAmount);
+
+    assembly {
+      let result := call(gas(), V3_SWAP_ROUTER_ADDRESS, 0, add(finalSwapData, 0x20), mload(finalSwapData), 0, 0)
+      if eq(result, 0) {
+        returndatacopy(0, 0, returndatasize())
+        revert(0, returndatasize())
+      }
+    }
+
+    tokenOut.transfer(ADAPTER_OWNER, tokenOut.balanceOf(address(this)));
+  }
 
   function _routerApproveMax(IERC20 token) internal {
     if (token.allowance(address(this), V3_SWAP_ROUTER_ADDRESS) < MAX_INT) {
